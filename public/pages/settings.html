@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración — Rin-Tohsaka API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <div class="overlay" id="overlay"></div>
+
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-head">
+                <a href="/docs" class="logo">Rin<span>-</span>Tohsaka</a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-group-label">Documentación</div>
+                <a href="/docs" class="nav-item">Bienvenida</a>
+
+                <div class="nav-group-label">Endpoints</div>
+                <a href="/docs/search" class="nav-item sub">Search</a>
+
+                <div class="nav-bottom">
+                    <a href="/docs/settings" class="nav-item active">Configuración</a>
+                    <a href="/panel" class="nav-item" id="nav-panel" style="display:none;">Panel</a>
+                </div>
+            </nav>
+            <div class="sidebar-foot">
+                <img class="mini-avatar" id="sidebar-avatar" src="">
+                <div class="who">
+                    <div class="name" id="sidebar-name">—</div>
+                    <div class="role" id="sidebar-role">—</div>
+                </div>
+                <button class="icon-btn" onclick="logout()" title="Cerrar sesión">Salir</button>
+            </div>
+        </aside>
+
+        <div class="main-area">
+            <div class="topbar">
+                <button class="hamburger" onclick="toggleSidebar()">≡</button>
+                <div class="logo">Rin<span>-</span>Tohsaka</div>
+            </div>
+
+            <div class="content">
+                <div class="tag mono">#documentacion</div>
+                <h1>Configuración</h1>
+                <p class="lede">Actualiza tu nombre de usuario y tu foto de perfil.</p>
+
+                <div class="msg ok" id="msgOk"></div>
+                <div class="msg error" id="msgErr"></div>
+
+                <div class="avatar-preview-wrap">
+                    <img class="avatar-preview" id="avatarPreview" src="">
+                    <div class="hint">Pega la URL de una imagen (por ejemplo de ibb.co o cualquier host de imágenes) en el campo de abajo para actualizar tu foto.</div>
+                </div>
+
+                <form id="settingsForm" style="max-width:420px;">
+                    <div class="field">
+                        <label>Nombre de usuario</label>
+                        <input type="text" id="username" required minlength="3">
+                    </div>
+                    <div class="field">
+                        <!-- FOTO: aquí es donde se pega la URL de la foto -->
+                        <label>URL de la foto de perfil</label>
+                        <input type="url" id="profileImg" placeholder="https://...">
+                    </div>
+                    <button type="submit" class="btn solid">Guardar cambios</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        (async () => {
+            const user = await requireSession();
+            if (!user) return;
+            document.getElementById('username').value = user.username;
+            document.getElementById('profileImg').value = user.profile_img;
+            document.getElementById('avatarPreview').src = user.profile_img;
+        })();
+
+        document.getElementById('profileImg').addEventListener('input', (e) => {
+            document.getElementById('avatarPreview').src = e.target.value;
+        });
+
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msgOk = document.getElementById('msgOk');
+            const msgErr = document.getElementById('msgErr');
+            msgOk.classList.remove('show');
+            msgErr.classList.remove('show');
+
+            const username = document.getElementById('username').value.trim();
+            const profile_img = document.getElementById('profileImg').value.trim();
+
+            try {
+                const res = await fetch('/api/auth/update-profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, profile_img })
+                });
+                const data = await res.json();
+
+                if (!data.status) {
+                    msgErr.innerText = data.message || 'No se pudo actualizar.';
+                    msgErr.classList.add('show');
+                    return;
+                }
+
+                msgOk.innerText = 'Perfil actualizado correctamente.';
+                msgOk.classList.add('show');
+                document.getElementById('sidebar-name').innerText = username;
+                document.getElementById('sidebar-avatar').src = profile_img;
+            } catch (err) {
+                msgErr.innerText = 'Error de conexión.';
+                msgErr.classList.add('show');
+            }
+        });
+    </script>
+</body>
+</html>

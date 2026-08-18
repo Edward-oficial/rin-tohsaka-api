@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel — Rin-Tohsaka API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <div class="overlay" id="overlay"></div>
+
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-head">
+                <a href="/docs" class="logo">Rin<span>-</span>Tohsaka</a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-group-label">Documentación</div>
+                <a href="/docs" class="nav-item">Bienvenida</a>
+
+                <div class="nav-group-label">Endpoints</div>
+                <a href="/docs/search" class="nav-item sub">Search</a>
+
+                <div class="nav-bottom">
+                    <a href="/docs/settings" class="nav-item">Configuración</a>
+                    <a href="/panel" class="nav-item active" id="nav-panel">Panel</a>
+                </div>
+            </nav>
+            <div class="sidebar-foot">
+                <img class="mini-avatar" id="sidebar-avatar" src="">
+                <div class="who">
+                    <div class="name" id="sidebar-name">—</div>
+                    <div class="role" id="sidebar-role">—</div>
+                </div>
+                <button class="icon-btn" onclick="logout()" title="Cerrar sesión">Salir</button>
+            </div>
+        </aside>
+
+        <div class="main-area">
+            <div class="topbar">
+                <button class="hamburger" onclick="toggleSidebar()">≡</button>
+                <div class="logo">Rin<span>-</span>Tohsaka</div>
+            </div>
+
+            <div class="content" style="max-width:1000px;">
+                <div class="tag mono">#documentacion</div>
+                <h1>Panel</h1>
+                <p class="lede">Gestión de usuarios — visible únicamente para la cuenta CEO. Agrega solicitudes o elimina cuentas.</p>
+
+                <div class="msg ok" id="msgOk"></div>
+                <div class="msg error" id="msgErr"></div>
+
+                <div class="panel-table-wrap">
+                    <table class="panel-table">
+                        <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Correo</th>
+                                <th>Contraseña</th>
+                                <th>Rol</th>
+                                <th>Plan</th>
+                                <th>Solicitudes hoy</th>
+                                <th>Límite</th>
+                                <th>Total</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersBody">
+                            <tr><td colspan="9">Cargando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        (async () => {
+            const user = await requireSession({ requireCeo: true });
+            if (!user) return;
+            loadUsers();
+        })();
+
+        function showOk(text) {
+            const el = document.getElementById('msgOk');
+            document.getElementById('msgErr').classList.remove('show');
+            el.innerText = text;
+            el.classList.add('show');
+        }
+
+        function showErr(text) {
+            const el = document.getElementById('msgErr');
+            document.getElementById('msgOk').classList.remove('show');
+            el.innerText = text;
+            el.classList.add('show');
+        }
+
+        async function loadUsers() {
+            const body = document.getElementById('usersBody');
+            try {
+                const res = await fetch('/api/admin/users');
+                const data = await res.json();
+                if (!data.status) {
+                    body.innerHTML = `<tr><td colspan="9">${data.message}</td></tr>`;
+                    return;
+                }
+                body.innerHTML = data.users.map(u => `
+                    <tr>
+                        <td>${u.username}</td>
+                        <td>${u.email}</td>
+                        <td class="pw-cell">${u.password}</td>
+                        <td><span class="badge-role">${u.role}</span></td>
+                        <td>${u.plan}</td>
+                        <td>${u.request_today}</td>
+                        <td>${u.role === 'ceo' ? 'Ilimitado' : u.limit_req}</td>
+                        <td>${u.total_request}</td>
+                        <td>
+                            <div class="row-actions">
+                                <button class="icon-btn" onclick="addRequests('${u.email}')">+ Solicitudes</button>
+                                ${u.role !== 'ceo' ? `<button class="icon-btn danger" onclick="deleteUser('${u.email}')">Eliminar</button>` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                body.innerHTML = '<tr><td colspan="9">Error al cargar usuarios.</td></tr>';
+            }
+        }
+
+        async function addRequests(email) {
+            const amount = prompt('¿Cuántas solicitudes quieres agregar a ' + email + '?');
+            if (!amount || isNaN(amount)) return;
+
+            try {
+                const res = await fetch('/api/admin/add-requests', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, amount: parseInt(amount, 10) })
+                });
+                const data = await res.json();
+                if (!data.status) { showErr(data.message); return; }
+                showOk(data.message);
+                loadUsers();
+            } catch (e) {
+                showErr('Error al agregar solicitudes.');
+            }
+        }
+
+        async function deleteUser(email) {
+            if (!confirm('¿Eliminar la cuenta ' + email + '? Esta acción no se puede deshacer.')) return;
+
+            try {
+                const res = await fetch('/api/admin/users/' + encodeURIComponent(email), { method: 'DELETE' });
+                const data = await res.json();
+                if (!data.status) { showErr(data.message); return; }
+                showOk(data.message);
+                loadUsers();
+            } catch (e) {
+                showErr('Error al eliminar usuario.');
+            }
+        }
+    </script>
+</body>
+</html>
