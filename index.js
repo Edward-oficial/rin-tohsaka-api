@@ -6,7 +6,7 @@ require('dotenv').config();
 const { seedCeo } = require('./seedCeo');
 const { router: authRouter, requireAuth, requireCeo } = require('./routes/auth');
 const adminRouter = require('./routes/admin');
-const toolsRouter = require('./routes/tools');
+const searchRouter = require('./routes/search');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,7 +21,7 @@ seedCeo();
 // ===== API =====
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
-app.use('/api/tools', toolsRouter);
+app.use('/api/search', searchRouter);
 
 // ===== Archivos estáticos (css, js, imágenes) =====
 app.use('/css', express.static(path.join(__dirname, 'public', 'css')));
