@@ -23,6 +23,8 @@ db.exec(`
         profile_img TEXT DEFAULT 'https://i.ibb.co/chJXMd0q/NAGI-REO-RIN-SAE-ISAGI.jpg',
         vip_since TEXT DEFAULT NULL,
         vip_expires TEXT DEFAULT NULL,
+        verified INTEGER DEFAULT 0,
+        verify_code TEXT DEFAULT NULL,
         created_at TEXT DEFAULT (datetime('now'))
     )
 `);
@@ -51,6 +53,10 @@ db.exec(`
     )
 `);
 
+// Intenta agregar columnas nuevas si la db ya existia de una version anterior
+try { db.exec(`ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 0`); } catch (e) {}
+try { db.exec(`ALTER TABLE users ADD COLUMN verify_code TEXT DEFAULT NULL`); } catch (e) {}
+
 // Prepared statements
 const stmts = {
     // Usuarios
@@ -61,8 +67,8 @@ const stmts = {
     getAllUsers: db.prepare('SELECT * FROM users ORDER BY total_request DESC'),
     countUsers: db.prepare('SELECT COUNT(*) as count FROM users'),
     createUser: db.prepare(`
-        INSERT INTO users (username, email, password, key, role, plan, limit_req, profile_img)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO users (username, email, password, key, role, plan, limit_req, profile_img, verified, verify_code)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `),
     updateUser: db.prepare(`
         UPDATE users SET
@@ -73,8 +79,16 @@ const stmts = {
     `),
     deleteUser: db.prepare('DELETE FROM users WHERE email = ?'),
     addRequests: db.prepare('UPDATE users SET limit_req = limit_req + ? WHERE id = ?'),
+    setVerifyCode: db.prepare('UPDATE users SET verify_code = ? WHERE email = ?'),
+    markVerified: db.prepare(`UPDATE users SET verified = 1, verify_code = NULL WHERE email = ?`),
+    updateProfile: db.prepare('UPDATE users SET username = ?, profile_img = ? WHERE id = ?'),
+    incrementRequest: db.prepare(`
+        UPDATE users SET request_today = request_today + 1, total_request = total_request + 1, last_request_date = ?
+        WHERE id = ?
+    `),
+    resetDaily: db.prepare(`UPDATE users SET request_today = 0, last_free_refill = ? WHERE id = ?`),
 
-    // Códigos
+    // Codigos
     findCode: db.prepare('SELECT * FROM redeem_codes WHERE code = ?'),
     getAllCodes: db.prepare('SELECT * FROM redeem_codes ORDER BY created_at DESC'),
     createCode: db.prepare('INSERT INTO redeem_codes (code, requests, max_uses) VALUES (?, ?, ?)'),
