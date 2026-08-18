@@ -7,6 +7,200 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/main.css">
+    <style>
+        /* Estilos adicionales para la página de Search */
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .endpoint-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .copy-btn-small {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .copy-btn-small:hover {
+            color: var(--text);
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .copy-btn-small.copied {
+            color: #4ade80;
+            border-color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+        }
+
+        .try-section {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 20px;
+        }
+
+        .try-section h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text);
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.65rem;
+            color: var(--muted);
+            font-weight: 400;
+            letter-spacing: 0.5px;
+        }
+
+        .live-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .try-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .try-input-group input {
+            flex: 1;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .try-input-group input:focus {
+            border-color: var(--accent);
+        }
+
+        .try-input-group input::placeholder {
+            color: var(--muted);
+            opacity: 0.7;
+        }
+
+        .result-container {
+            position: relative;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .result-label {
+            font-size: 0.7rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        .result-box {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Space Mono', monospace;
+            font-size: 0.78rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+            max-height: 400px;
+            overflow-y: auto;
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100px;
+            transition: all 0.2s ease;
+        }
+
+        .result-box.placeholder {
+            color: var(--muted);
+            font-style: italic;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .result-box.loading {
+            color: var(--accent);
+            animation: pulse 1.5s ease-in-out infinite;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .result-box.error {
+            color: var(--danger);
+            font-family: 'Space Grotesk', sans-serif;
+            border-color: var(--danger-border);
+            background: var(--danger-dim);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @media (max-width: 640px) {
+            .try-input-group {
+                flex-direction: column;
+            }
+            
+            .try-input-group .btn {
+                width: 100%;
+            }
+            
+            .endpoint-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .try-section h3 {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="overlay" id="overlay"></div>
@@ -51,29 +245,80 @@
 
                 <div class="endpoint-block">
                     <div class="ep-head">
-                        <span class="ep-method">GET</span>
-                        <span class="ep-path">/api/search</span>
+                        <div class="endpoint-header">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span class="ep-method">GET</span>
+                                <span class="ep-path" id="endpointPath">/api/search</span>
+                            </div>
+                            <button class="copy-btn-small" onclick="copyEndpoint()" id="copyEndpointBtn">
+                                Copiar endpoint
+                            </button>
+                        </div>
                     </div>
                     <div class="ep-body">
                         <p>Busca videos de YouTube. Requiere tu API key, ya sea como parámetro <code>apikey</code> o como header <code>apikey</code>.</p>
 
                         <table class="param-table">
                             <thead>
-                                <tr><th>Parámetro</th><th>Tipo</th><th>Requerido</th><th>Descripción</th></tr>
+                                <tr>
+                                    <th>Parámetro</th>
+                                    <th>Tipo</th>
+                                    <th>Requerido</th>
+                                    <th>Descripción</th>
+                                </tr>
                             </thead>
                             <tbody>
-                                <tr><td class="pname">query</td><td>string</td><td>Sí</td><td>Texto a buscar</td></tr>
-                                <tr><td class="pname">apikey</td><td>string</td><td>Sí</td><td>Tu API key personal</td></tr>
+                                <tr>
+                                    <td class="pname">query</td>
+                                    <td>string</td>
+                                    <td>Sí</td>
+                                    <td>Texto a buscar</td>
+                                </tr>
+                                <tr>
+                                    <td class="pname">apikey</td>
+                                    <td>string</td>
+                                    <td>Sí</td>
+                                    <td>Tu API key personal</td>
+                                </tr>
                             </tbody>
                         </table>
 
                         <pre class="code-block" id="exampleUrl">GET /api/search?query=ejemplo&amp;apikey=TU_API_KEY</pre>
 
-                        <div class="try-row">
-                            <input type="text" id="qInput" placeholder="Escribe algo para probar...">
-                            <button class="btn solid" onclick="tryEndpoint()">Probar</button>
+                        <!-- Sección de prueba -->
+                        <div class="try-section">
+                            <h3>
+                                Probar endpoint
+                                <span class="live-indicator">
+                                    <span class="live-dot"></span>
+                                    Búsqueda en vivo
+                                </span>
+                            </h3>
+                            
+                            <div class="try-input-group">
+                                <input 
+                                    type="text" 
+                                    id="qInput" 
+                                    placeholder="Escribe algo para buscar..."
+                                    autocomplete="off"
+                                >
+                                <button class="btn solid" onclick="tryEndpoint()" id="searchBtn">
+                                    Buscar
+                                </button>
+                            </div>
+                            
+                            <div class="result-container">
+                                <div class="result-header">
+                                    <span class="result-label">Resultado JSON</span>
+                                    <button class="copy-btn-small" onclick="copyResult()" id="copyResultBtn" style="display:none;">
+                                        Copiar JSON
+                                    </button>
+                                </div>
+                                <div class="result-box placeholder" id="result">
+                                    Los resultados aparecerán aquí...
+                                </div>
+                            </div>
                         </div>
-                        <div class="result-box" id="result"></div>
                     </div>
                 </div>
             </div>
@@ -83,29 +328,149 @@
     <script src="/js/app.js"></script>
     <script>
         let apiKey = '';
+        let currentResult = null;
+        let debounceTimer = null;
 
         (async () => {
             const user = await requireSession();
             if (!user) return;
             apiKey = user.key;
             document.getElementById('exampleUrl').innerText = `GET /api/search?query=ejemplo&apikey=${apiKey}`;
+            document.getElementById('endpointPath').innerText = `/api/search`;
         })();
 
-        async function tryEndpoint() {
+        // Búsqueda en tiempo real
+        document.getElementById('qInput').addEventListener('input', function(e) {
+            const query = e.target.value.trim();
+            
+            // Limpiar el temporizador anterior
+            clearTimeout(debounceTimer);
+            
+            if (!query) {
+                showPlaceholder();
+                return;
+            }
+            
+            // Actualizar URL de ejemplo en vivo
+            updateExampleUrl(query);
+            
+            // Esperar 500ms antes de buscar (debounce)
+            debounceTimer = setTimeout(() => {
+                tryEndpoint(true); // true = búsqueda silenciosa
+            }, 500);
+        });
+
+        // También buscar al presionar Enter
+        document.getElementById('qInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                clearTimeout(debounceTimer);
+                tryEndpoint(false);
+            }
+        });
+
+        function updateExampleUrl(query) {
+            const exampleUrl = document.getElementById('exampleUrl');
+            exampleUrl.innerText = `GET /api/search?query=${encodeURIComponent(query)}&apikey=${apiKey}`;
+        }
+
+        function showPlaceholder() {
+            const box = document.getElementById('result');
+            box.classList.add('placeholder');
+            box.classList.remove('loading', 'error');
+            box.innerText = 'Los resultados aparecerán aquí...';
+            document.getElementById('copyResultBtn').style.display = 'none';
+            currentResult = null;
+            
+            // Resetear URL de ejemplo
+            document.getElementById('exampleUrl').innerText = `GET /api/search?query=ejemplo&apikey=${apiKey}`;
+        }
+
+        function showLoading() {
+            const box = document.getElementById('result');
+            box.classList.remove('placeholder', 'error');
+            box.classList.add('loading');
+            box.innerText = 'Consultando...';
+            document.getElementById('copyResultBtn').style.display = 'none';
+        }
+
+        async function tryEndpoint(silent = false) {
             const box = document.getElementById('result');
             const q = document.getElementById('qInput').value.trim();
-            if (!q) return;
+            
+            if (!q) {
+                if (!silent) {
+                    box.classList.remove('placeholder', 'loading');
+                    box.classList.add('error');
+                    box.innerText = 'Error: Escribe algo para buscar';
+                    document.getElementById('copyResultBtn').style.display = 'none';
+                }
+                return;
+            }
 
-            box.classList.add('show');
-            box.innerText = 'Consultando...';
+            showLoading();
 
             try {
                 const res = await fetch(`/api/search?query=${encodeURIComponent(q)}&apikey=${apiKey}`);
                 const data = await res.json();
+                
+                currentResult = data;
+                box.classList.remove('loading', 'error', 'placeholder');
                 box.innerText = JSON.stringify(data, null, 2);
+                
+                // Mostrar botón de copiar
+                document.getElementById('copyResultBtn').style.display = 'inline-flex';
             } catch (e) {
+                box.classList.remove('loading', 'placeholder');
+                box.classList.add('error');
                 box.innerText = 'Error al conectar con el endpoint.';
+                document.getElementById('copyResultBtn').style.display = 'none';
+                currentResult = null;
             }
+        }
+
+        function copyEndpoint() {
+            const endpoint = document.getElementById('exampleUrl').innerText;
+            copyToClipboard(endpoint, 'copyEndpointBtn');
+        }
+
+        function copyResult() {
+            if (currentResult) {
+                const jsonString = JSON.stringify(currentResult, null, 2);
+                copyToClipboard(jsonString, 'copyResultBtn');
+            }
+        }
+
+        function copyToClipboard(text, btnId) {
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById(btnId);
+                const originalText = btn.textContent;
+                btn.textContent = 'Copiado';
+                btn.classList.add('copied');
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            }).catch(err => {
+                console.error('Error al copiar:', err);
+                // Fallback para navegadores que no soportan clipboard API
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                const btn = document.getElementById(btnId);
+                const originalText = btn.textContent;
+                btn.textContent = 'Copiado';
+                btn.classList.add('copied');
+                
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
         }
     </script>
 </body>
