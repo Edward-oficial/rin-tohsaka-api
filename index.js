@@ -7,7 +7,7 @@ const { initSchema } = require('./db');
 const { seedCeo } = require('./seedCeo');
 const { router: authRouter } = require('./routes/auth');
 const adminRouter = require('./routes/admin');
-const toolsRouter = require('./routes/tools');
+const searchRouter = require('./routes/search');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,7 +19,7 @@ app.set('trust proxy', 1);
 // ===== API =====
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
-app.use('/api/tools', toolsRouter);
+app.use('/api/search', searchRouter);
 
 // ===== Archivos estáticos (css, js, imágenes) =====
 app.use('/css', express.static(path.join(__dirname, 'public', 'css')));
