@@ -149,24 +149,62 @@
             font-size: 0.78rem;
             white-space: pre-wrap;
             word-break: break-word;
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
+            overflow-x: auto;
             color: var(--text);
             line-height: 1.6;
             min-height: 100px;
             transition: all 0.2s ease;
+            cursor: text;
+            user-select: text;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Estilos personalizados para el scrollbar del resultado */
+        .result-box::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        .result-box::-webkit-scrollbar-track {
+            background: var(--surface);
+            border-radius: 0 0 8px 0;
+        }
+
+        .result-box::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 5px;
+            border: 2px solid var(--surface);
+        }
+
+        .result-box::-webkit-scrollbar-thumb:hover {
+            background: var(--muted);
+            cursor: pointer;
+        }
+
+        /* Para Firefox */
+        .result-box {
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) var(--surface);
         }
 
         .result-box.placeholder {
             color: var(--muted);
             font-style: italic;
             font-family: 'Space Grotesk', sans-serif;
+            cursor: default;
         }
 
         .result-box.loading {
             color: var(--accent);
             animation: pulse 1.5s ease-in-out infinite;
             font-family: 'Space Grotesk', sans-serif;
+            cursor: wait;
         }
 
         .result-box.error {
@@ -198,6 +236,12 @@
             .try-section h3 {
                 flex-direction: column;
                 align-items: flex-start;
+            }
+
+            .result-box {
+                max-height: 350px;
+                font-size: 0.7rem;
+                padding: 12px;
             }
         }
     </style>
@@ -330,12 +374,18 @@
         let apiKey = '';
         let currentResult = null;
         let debounceTimer = null;
+        let fullEndpointUrl = '';
 
         (async () => {
             const user = await requireSession();
             if (!user) return;
             apiKey = user.key;
-            document.getElementById('exampleUrl').innerText = `GET /api/search?query=ejemplo&apikey=${apiKey}`;
+            
+            // Construir URL completa del endpoint
+            const baseUrl = window.location.origin;
+            fullEndpointUrl = `${baseUrl}/api/search?query=ejemplo&apikey=${apiKey}`;
+            
+            document.getElementById('exampleUrl').innerText = fullEndpointUrl;
             document.getElementById('endpointPath').innerText = `/api/search`;
         })();
 
@@ -370,7 +420,10 @@
 
         function updateExampleUrl(query) {
             const exampleUrl = document.getElementById('exampleUrl');
-            exampleUrl.innerText = `GET /api/search?query=${encodeURIComponent(query)}&apikey=${apiKey}`;
+            const baseUrl = window.location.origin;
+            const updatedUrl = `${baseUrl}/api/search?query=${encodeURIComponent(query)}&apikey=${apiKey}`;
+            exampleUrl.innerText = updatedUrl;
+            fullEndpointUrl = updatedUrl;
         }
 
         function showPlaceholder() {
@@ -382,7 +435,9 @@
             currentResult = null;
             
             // Resetear URL de ejemplo
-            document.getElementById('exampleUrl').innerText = `GET /api/search?query=ejemplo&apikey=${apiKey}`;
+            const baseUrl = window.location.origin;
+            fullEndpointUrl = `${baseUrl}/api/search?query=ejemplo&apikey=${apiKey}`;
+            document.getElementById('exampleUrl').innerText = fullEndpointUrl;
         }
 
         function showLoading() {
@@ -429,8 +484,9 @@
         }
 
         function copyEndpoint() {
-            const endpoint = document.getElementById('exampleUrl').innerText;
-            copyToClipboard(endpoint, 'copyEndpointBtn');
+            // Copiar la URL completa con dominio
+            const endpointToCopy = fullEndpointUrl || `${window.location.origin}/api/search?query=ejemplo&apikey=${apiKey}`;
+            copyToClipboard(endpointToCopy, 'copyEndpointBtn');
         }
 
         function copyResult() {
@@ -456,6 +512,8 @@
                 // Fallback para navegadores que no soportan clipboard API
                 const textarea = document.createElement('textarea');
                 textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
                 document.body.appendChild(textarea);
                 textarea.select();
                 document.execCommand('copy');
