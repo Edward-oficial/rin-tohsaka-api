@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión — Rin-Tohsaka API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <header class="top-header">
+        <a href="/" class="logo">Rin<span>-</span>Tohsaka</a>
+        <a href="/register" class="btn">Crear cuenta</a>
+    </header>
+
+    <div class="auth-wrap">
+        <div class="card">
+            <h1>Iniciar sesión</h1>
+            <p class="sub">Ingresa con tu correo y contraseña para acceder a la documentación.</p>
+
+            <div class="msg error" id="msg"></div>
+
+            <form id="loginForm">
+                <div class="field">
+                    <label>Correo</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="field">
+                    <label>Contraseña</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn solid block">Entrar</button>
+            </form>
+
+            <div class="foot">¿No tienes cuenta? <a href="/register">Regístrate</a></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const msg = document.getElementById('msg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            msg.classList.remove('show');
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+
+                if (data.needsVerify) {
+                    sessionStorage.setItem('rin_verify_email', data.email);
+                    sessionStorage.setItem('rin_verify_code', data.code);
+                    window.location.href = '/verify';
+                    return;
+                }
+
+                if (!data.status) {
+                    msg.innerText = data.message || 'No se pudo iniciar sesión.';
+                    msg.classList.add('show');
+                    return;
+                }
+
+                window.location.href = '/docs';
+            } catch (err) {
+                msg.innerText = 'Error de conexión. Intenta de nuevo.';
+                msg.classList.add('show');
+            }
+        });
+    </script>
+</body>
+</html>
