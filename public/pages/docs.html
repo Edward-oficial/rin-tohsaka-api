@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación — Rin-Tohsaka API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <div class="overlay" id="overlay"></div>
+
+    <div class="app-shell">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-head">
+                <a href="/docs" class="logo">Rin<span>-</span>Tohsaka</a>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-group-label">Documentación</div>
+                <a href="/docs" class="nav-item active">Bienvenida</a>
+
+                <div class="nav-group-label">Endpoints</div>
+                <a href="/docs/search" class="nav-item sub">Search</a>
+
+                <div class="nav-bottom">
+                    <a href="/docs/settings" class="nav-item">Configuración</a>
+                    <a href="/panel" class="nav-item" id="nav-panel" style="display:none;">Panel</a>
+                </div>
+            </nav>
+            <div class="sidebar-foot">
+                <img class="mini-avatar" id="sidebar-avatar" src="">
+                <div class="who">
+                    <div class="name" id="sidebar-name">—</div>
+                    <div class="role" id="sidebar-role">—</div>
+                </div>
+                <button class="icon-btn" onclick="logout()" title="Cerrar sesión">Salir</button>
+            </div>
+        </aside>
+
+        <div class="main-area">
+            <div class="topbar">
+                <button class="hamburger" onclick="toggleSidebar()">≡</button>
+                <div class="logo">Rin<span>-</span>Tohsaka</div>
+            </div>
+
+            <div class="content">
+                <div class="tag mono">#documentacion</div>
+                <h1 id="welcomeTitle">Bienvenido</h1>
+                <p class="lede">Esta es tu documentación personal de Rin-Tohsaka API. Aquí encuentras tu API key, el estado de tu plan y los endpoints disponibles para integrar en tus proyectos.</p>
+
+                <div class="key-row">
+                    <input type="text" id="apiKey" readonly value="">
+                    <button class="copy-btn" onclick="copyKey()">Copiar</button>
+                </div>
+
+                <div class="grid-cards">
+                    <div class="info-card">
+                        <div class="k">Plan</div>
+                        <div class="v" id="planVal">—</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="k">Solicitudes hoy</div>
+                        <div class="v" id="reqTodayVal">—</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="k">Límite diario</div>
+                        <div class="v" id="reqLimitVal">—</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="k">Solicitudes totales</div>
+                        <div class="v" id="reqTotalVal">—</div>
+                    </div>
+                </div>
+
+                <div class="endpoint-block">
+                    <div class="ep-head">
+                        <span class="ep-method">GET</span>
+                        <span class="ep-path">/api/tools/search</span>
+                    </div>
+                    <div class="ep-body">
+                        <p>Único endpoint disponible por ahora. Ve a la sección Search en el menú para ver los parámetros y probarlo.</p>
+                        <a href="/docs/search" class="btn">Ver endpoint</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script>
+        (async () => {
+            const user = await requireSession();
+            if (!user) return;
+            document.getElementById('welcomeTitle').innerText = `Bienvenido, ${user.username}`;
+            document.getElementById('apiKey').value = user.key;
+            document.getElementById('planVal').innerText = user.plan;
+            document.getElementById('reqTodayVal').innerText = user.request_today;
+            document.getElementById('reqLimitVal').innerText = user.role === 'ceo' ? 'Ilimitado' : user.limit_req;
+            document.getElementById('reqTotalVal').innerText = user.total_request;
+        })();
+
+        function copyKey() {
+            const input = document.getElementById('apiKey');
+            input.select();
+            navigator.clipboard.writeText(input.value);
+        }
+    </script>
+</body>
+</html>
