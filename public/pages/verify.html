@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar cuenta — Rin-Tohsaka API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <header class="top-header">
+        <a href="/" class="logo">Rin<span>-</span>Tohsaka</a>
+    </header>
+
+    <div class="auth-wrap">
+        <div class="card">
+            <h1>Verifica tu cuenta</h1>
+            <p class="sub">Como aún no hay un servicio de correo conectado, tu código de verificación se muestra directamente aquí. Confírmalo para activar tu cuenta.</p>
+
+            <div class="code-box">
+                <div class="label">Tu código de verificación</div>
+                <div class="code" id="codeDisplay">------</div>
+            </div>
+
+            <div class="msg error" id="msg"></div>
+
+            <form id="verifyForm">
+                <div class="field">
+                    <label>Ingresa el código</label>
+                    <input type="text" id="code" maxlength="6" required autocomplete="one-time-code">
+                </div>
+                <button type="submit" class="btn solid block">Confirmar cuenta</button>
+            </form>
+
+            <div class="foot">¿Nada de esto es tuyo? <a href="/register">Volver a registrarte</a></div>
+        </div>
+    </div>
+
+    <script>
+        const email = sessionStorage.getItem('rin_verify_email');
+        const code = sessionStorage.getItem('rin_verify_code');
+
+        if (!email) {
+            window.location.href = '/register';
+        } else if (code) {
+            document.getElementById('codeDisplay').innerText = code;
+        }
+
+        const form = document.getElementById('verifyForm');
+        const msg = document.getElementById('msg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            msg.classList.remove('show');
+
+            const inputCode = document.getElementById('code').value.trim();
+
+            try {
+                const res = await fetch('/api/auth/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, code: inputCode })
+                });
+                const data = await res.json();
+
+                if (!data.status) {
+                    msg.innerText = data.message || 'Código incorrecto.';
+                    msg.classList.add('show');
+                    return;
+                }
+
+                sessionStorage.removeItem('rin_verify_email');
+                sessionStorage.removeItem('rin_verify_code');
+                window.location.href = '/docs';
+            } catch (err) {
+                msg.innerText = 'Error de conexión. Intenta de nuevo.';
+                msg.classList.add('show');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear cuenta — Rin-Tohsaka API</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <header class="top-header">
+        <a href="/" class="logo">Rin<span>-</span>Tohsaka</a>
+        <a href="/login" class="btn">Iniciar sesión</a>
+    </header>
+
+    <div class="auth-wrap">
+        <div class="card">
+            <h1>Crear cuenta</h1>
+            <p class="sub">Regístrate para obtener tu API key y 100 solicitudes gratis.</p>
+
+            <div class="msg error" id="msg"></div>
+
+            <form id="registerForm">
+                <div class="field">
+                    <label>Nombre de usuario</label>
+                    <input type="text" id="username" required minlength="3">
+                </div>
+                <div class="field">
+                    <label>Correo</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="field">
+                    <label>Contraseña</label>
+                    <input type="password" id="password" required minlength="6">
+                </div>
+                <button type="submit" class="btn solid block">Crear cuenta</button>
+            </form>
+
+            <div class="foot">¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('registerForm');
+        const msg = document.getElementById('msg');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            msg.classList.remove('show');
+
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                const data = await res.json();
+
+                if (!data.status) {
+                    msg.innerText = data.message || 'No se pudo crear la cuenta.';
+                    msg.classList.add('show');
+                    return;
+                }
+
+                sessionStorage.setItem('rin_verify_email', data.email);
+                sessionStorage.setItem('rin_verify_code', data.code);
+                window.location.href = '/verify';
+            } catch (err) {
+                msg.innerText = 'Error de conexión. Intenta de nuevo.';
+                msg.classList.add('show');
+            }
+        });
+    </script>
+</body>
+</html>
