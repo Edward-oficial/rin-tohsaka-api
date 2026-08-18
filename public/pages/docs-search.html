@@ -15,43 +15,6 @@
             gap: 24px;
         }
 
-        .endpoint-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .copy-btn-small {
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            color: var(--muted);
-            padding: 8px 14px;
-            border-radius: 6px;
-            font-size: 0.72rem;
-            cursor: pointer;
-            font-family: 'Space Grotesk', sans-serif;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            white-space: nowrap;
-            font-weight: 500;
-            letter-spacing: 0.3px;
-        }
-
-        .copy-btn-small:hover {
-            color: var(--text);
-            border-color: var(--accent);
-            background: var(--accent-dim);
-        }
-
-        .copy-btn-small.copied {
-            color: #4ade80;
-            border-color: #4ade80;
-            background: rgba(74, 222, 128, 0.1);
-        }
-
         .try-section {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -140,6 +103,37 @@
             font-weight: 500;
         }
 
+        .copy-btn-small {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        .copy-btn-small:hover {
+            color: var(--text);
+            border-color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .copy-btn-small.copied {
+            color: #4ade80;
+            border-color: #4ade80;
+            background: rgba(74, 222, 128, 0.1);
+        }
+
+        /* IMPORTANTE: Result box con altura fija y scroll */
         .result-box {
             background: var(--surface-2);
             border: 1px solid var(--border);
@@ -149,12 +143,12 @@
             font-size: 0.78rem;
             white-space: pre-wrap;
             word-break: break-word;
-            max-height: 500px;
-            overflow-y: auto;
+            height: 400px; /* Altura fija */
+            max-height: 400px;
+            overflow-y: scroll; /* Forzar scroll vertical */
             overflow-x: auto;
             color: var(--text);
             line-height: 1.6;
-            min-height: 100px;
             transition: all 0.2s ease;
             cursor: text;
             user-select: text;
@@ -163,12 +157,14 @@
             -ms-user-select: text;
             overscroll-behavior: contain;
             -webkit-overflow-scrolling: touch;
+            display: block;
+            width: 100%;
         }
 
-        /* Estilos personalizados para el scrollbar del resultado */
+        /* Estilos personalizados para el scrollbar */
         .result-box::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
         }
 
         .result-box::-webkit-scrollbar-track {
@@ -178,7 +174,7 @@
 
         .result-box::-webkit-scrollbar-thumb {
             background: var(--border);
-            border-radius: 5px;
+            border-radius: 6px;
             border: 2px solid var(--surface);
         }
 
@@ -198,6 +194,10 @@
             font-style: italic;
             font-family: 'Space Grotesk', sans-serif;
             cursor: default;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
         }
 
         .result-box.loading {
@@ -205,6 +205,10 @@
             animation: pulse 1.5s ease-in-out infinite;
             font-family: 'Space Grotesk', sans-serif;
             cursor: wait;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
         }
 
         .result-box.error {
@@ -212,6 +216,10 @@
             font-family: 'Space Grotesk', sans-serif;
             border-color: var(--danger-border);
             background: var(--danger-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
         }
 
         @keyframes pulse {
@@ -228,18 +236,14 @@
                 width: 100%;
             }
             
-            .endpoint-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
             .try-section h3 {
                 flex-direction: column;
                 align-items: flex-start;
             }
 
             .result-box {
-                max-height: 350px;
+                height: 300px;
+                max-height: 300px;
                 font-size: 0.7rem;
                 padding: 12px;
             }
@@ -289,15 +293,8 @@
 
                 <div class="endpoint-block">
                     <div class="ep-head">
-                        <div class="endpoint-header">
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <span class="ep-method">GET</span>
-                                <span class="ep-path" id="endpointPath">/api/search</span>
-                            </div>
-                            <button class="copy-btn-small" onclick="copyEndpoint()" id="copyEndpointBtn">
-                                Copiar endpoint
-                            </button>
-                        </div>
+                        <span class="ep-method">GET</span>
+                        <span class="ep-path">/api/search</span>
                     </div>
                     <div class="ep-body">
                         <p>Busca videos de YouTube. Requiere tu API key, ya sea como parámetro <code>apikey</code> o como header <code>apikey</code>.</p>
@@ -374,19 +371,14 @@
         let apiKey = '';
         let currentResult = null;
         let debounceTimer = null;
-        let fullEndpointUrl = '';
 
         (async () => {
             const user = await requireSession();
             if (!user) return;
             apiKey = user.key;
             
-            // Construir URL completa del endpoint
-            const baseUrl = window.location.origin;
-            fullEndpointUrl = `${baseUrl}/api/search?query=ejemplo&apikey=${apiKey}`;
-            
-            document.getElementById('exampleUrl').innerText = fullEndpointUrl;
-            document.getElementById('endpointPath').innerText = `/api/search`;
+            // Actualizar URL de ejemplo con la API key
+            document.getElementById('exampleUrl').innerText = `GET ${window.location.origin}/api/search?query=ejemplo&apikey=${apiKey}`;
         })();
 
         // Búsqueda en tiempo real
@@ -420,10 +412,7 @@
 
         function updateExampleUrl(query) {
             const exampleUrl = document.getElementById('exampleUrl');
-            const baseUrl = window.location.origin;
-            const updatedUrl = `${baseUrl}/api/search?query=${encodeURIComponent(query)}&apikey=${apiKey}`;
-            exampleUrl.innerText = updatedUrl;
-            fullEndpointUrl = updatedUrl;
+            exampleUrl.innerText = `GET ${window.location.origin}/api/search?query=${encodeURIComponent(query)}&apikey=${apiKey}`;
         }
 
         function showPlaceholder() {
@@ -431,13 +420,12 @@
             box.classList.add('placeholder');
             box.classList.remove('loading', 'error');
             box.innerText = 'Los resultados aparecerán aquí...';
+            box.style.height = '200px';
             document.getElementById('copyResultBtn').style.display = 'none';
             currentResult = null;
             
             // Resetear URL de ejemplo
-            const baseUrl = window.location.origin;
-            fullEndpointUrl = `${baseUrl}/api/search?query=ejemplo&apikey=${apiKey}`;
-            document.getElementById('exampleUrl').innerText = fullEndpointUrl;
+            document.getElementById('exampleUrl').innerText = `GET ${window.location.origin}/api/search?query=ejemplo&apikey=${apiKey}`;
         }
 
         function showLoading() {
@@ -445,6 +433,7 @@
             box.classList.remove('placeholder', 'error');
             box.classList.add('loading');
             box.innerText = 'Consultando...';
+            box.style.height = '200px';
             document.getElementById('copyResultBtn').style.display = 'none';
         }
 
@@ -457,6 +446,7 @@
                     box.classList.remove('placeholder', 'loading');
                     box.classList.add('error');
                     box.innerText = 'Error: Escribe algo para buscar';
+                    box.style.height = '200px';
                     document.getElementById('copyResultBtn').style.display = 'none';
                 }
                 return;
@@ -471,6 +461,7 @@
                 currentResult = data;
                 box.classList.remove('loading', 'error', 'placeholder');
                 box.innerText = JSON.stringify(data, null, 2);
+                box.style.height = '400px'; // Altura para resultados
                 
                 // Mostrar botón de copiar
                 document.getElementById('copyResultBtn').style.display = 'inline-flex';
@@ -478,15 +469,10 @@
                 box.classList.remove('loading', 'placeholder');
                 box.classList.add('error');
                 box.innerText = 'Error al conectar con el endpoint.';
+                box.style.height = '200px';
                 document.getElementById('copyResultBtn').style.display = 'none';
                 currentResult = null;
             }
-        }
-
-        function copyEndpoint() {
-            // Copiar la URL completa con dominio
-            const endpointToCopy = fullEndpointUrl || `${window.location.origin}/api/search?query=ejemplo&apikey=${apiKey}`;
-            copyToClipboard(endpointToCopy, 'copyEndpointBtn');
         }
 
         function copyResult() {
