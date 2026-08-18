@@ -3,10 +3,11 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
+const { initSchema } = require('./db');
 const { seedCeo } = require('./seedCeo');
-const { router: authRouter, requireAuth, requireCeo } = require('./routes/auth');
+const { router: authRouter } = require('./routes/auth');
 const adminRouter = require('./routes/admin');
-const searchRouter = require('./routes/search');
+const toolsRouter = require('./routes/tools');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,13 +16,10 @@ app.use(express.json());
 app.use(cookieParser());
 app.set('trust proxy', 1);
 
-// Crea/actualiza la cuenta CEO al arrancar
-seedCeo();
-
 // ===== API =====
 app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
-app.use('/api/search', searchRouter);
+app.use('/api/tools', toolsRouter);
 
 // ===== Archivos estáticos (css, js, imágenes) =====
 app.use('/css', express.static(path.join(__dirname, 'public', 'css')));
@@ -34,15 +32,19 @@ function sendPage(name) {
     return (req, res) => res.sendFile(path.join(pages, name));
 }
 
-// Helper: exige sesión de servidor antes de servir una página protegida.
-// Si no hay cookie de sesión válida, redirige a /register.
-function pageAuth(req, res, next) {
-    const { stmts } = require('./db');
-    const key = req.cookies['rin_session'];
-    const user = key ? stmts.findByKey.get(key) : null;
-    if (!user || !user.verified) return res.redirect('/register');
-    req.rinPageUser = user;
-    next();
+// Helper async: exige sesión de servidor antes de servir una página protegida
+async function pageAuth(req, res, next) {
+    try {
+        const { stmts } = require('./db');
+        const key = req.cookies['rin_session'];
+        const user = key ? await stmts.findByKey.get(key) : null;
+        if (!user || !user.verified) return res.redirect('/register');
+        req.rinPageUser = user;
+        next();
+    } catch (err) {
+        console.error('[pageAuth]', err);
+        res.redirect('/register');
+    }
 }
 
 function pageCeoOnly(req, res, next) {
@@ -72,6 +74,20 @@ app.use((req, res) => {
     res.status(404).sendFile(path.join(pages, '404.html'));
 });
 
-app.listen(PORT, () => {
-    console.log(`Rin-Tohsaka API corriendo en el puerto ${PORT}`);
-});
+// Arranque: inicializa schema de Turso + seed CEO + listen
+async function start() {
+    try {
+        console.log('[db] Conectando a Turso...');
+        await initSchema();
+        console.log('[db] Schema listo');
+        await seedCeo();
+        app.listen(PORT, () => {
+            console.log(`Rin-Tohsaka API corriendo en el puerto ${PORT}`);
+        });
+    } catch (err) {
+        console.error('[start] Error al iniciar:', err);
+        process.exit(1);
+    }
+}
+
+start();

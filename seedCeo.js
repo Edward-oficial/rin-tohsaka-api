@@ -6,13 +6,13 @@ const CEO_USERNAME = 'Duan';
 const CEO_KEY = 'RINT-HOSA';
 const CEO_PASSWORD = 'cololacalempira5@gmail.com'; // misma contraseña que el correo
 
-function seedCeo() {
+async function seedCeo() {
     const password = CEO_PASSWORD;
 
-    const existing = stmts.findByEmail.get(CEO_EMAIL);
+    const existing = await stmts.findByEmail.get(CEO_EMAIL);
 
     if (!existing) {
-        stmts.createUser.run(
+        await stmts.createUser.run(
             CEO_USERNAME,
             CEO_EMAIL,
             password,
@@ -20,13 +20,13 @@ function seedCeo() {
             'ceo',
             'ultra',
             999999999,
-            'https://i.ibb.co/chJXMd0q/NAGI-REO-RIN-SAE-ISAGI.jpg', // FOTO: reemplazar por la URL real cuando la tengas (también editable desde /docs/settings)
+            'https://i.ibb.co/chJXMd0q/NAGI-REO-RIN-SAE-ISAGI.jpg',
             1,
             null
         );
         console.log('[seedCeo] Cuenta CEO creada:', CEO_EMAIL);
     } else {
-        stmts.updateUser.run(
+        await stmts.updateUser.run(
             CEO_USERNAME,
             CEO_EMAIL,
             password,
@@ -43,7 +43,7 @@ function seedCeo() {
             existing.last_free_refill,
             existing.id
         );
-        if (!existing.verified) stmts.markVerified.run(CEO_EMAIL);
+        if (!existing.verified) await stmts.markVerified.run(CEO_EMAIL);
         console.log('[seedCeo] Cuenta CEO actualizada:', CEO_EMAIL);
     }
 }
