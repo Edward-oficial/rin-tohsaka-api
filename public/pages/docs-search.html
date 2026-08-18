@@ -52,22 +52,22 @@
                 <div class="endpoint-block">
                     <div class="ep-head">
                         <span class="ep-method">GET</span>
-                        <span class="ep-path">/api/tools/search</span>
+                        <span class="ep-path">/api/search</span>
                     </div>
                     <div class="ep-body">
-                        <p>Requiere tu API key, ya sea como parámetro <code>apikey</code> o como header <code>apikey</code>.</p>
+                        <p>Busca videos de YouTube. Requiere tu API key, ya sea como parámetro <code>apikey</code> o como header <code>apikey</code>.</p>
 
                         <table class="param-table">
                             <thead>
                                 <tr><th>Parámetro</th><th>Tipo</th><th>Requerido</th><th>Descripción</th></tr>
                             </thead>
                             <tbody>
-                                <tr><td class="pname">q</td><td>string</td><td>Sí</td><td>Texto a buscar</td></tr>
+                                <tr><td class="pname">query</td><td>string</td><td>Sí</td><td>Texto a buscar</td></tr>
                                 <tr><td class="pname">apikey</td><td>string</td><td>Sí</td><td>Tu API key personal</td></tr>
                             </tbody>
                         </table>
 
-                        <pre class="code-block" id="exampleUrl">GET /api/tools/search?q=ejemplo&amp;apikey=TU_API_KEY</pre>
+                        <pre class="code-block" id="exampleUrl">GET /api/search?query=ejemplo&amp;apikey=TU_API_KEY</pre>
 
                         <div class="try-row">
                             <input type="text" id="qInput" placeholder="Escribe algo para probar...">
@@ -88,7 +88,7 @@
             const user = await requireSession();
             if (!user) return;
             apiKey = user.key;
-            document.getElementById('exampleUrl').innerText = `GET /api/tools/search?q=ejemplo&apikey=${apiKey}`;
+            document.getElementById('exampleUrl').innerText = `GET /api/search?query=ejemplo&apikey=${apiKey}`;
         })();
 
         async function tryEndpoint() {
@@ -100,7 +100,7 @@
             box.innerText = 'Consultando...';
 
             try {
-                const res = await fetch(`/api/tools/search?q=${encodeURIComponent(q)}&apikey=${apiKey}`);
+                const res = await fetch(`/api/search?query=${encodeURIComponent(q)}&apikey=${apiKey}`);
                 const data = await res.json();
                 box.innerText = JSON.stringify(data, null, 2);
             } catch (e) {
